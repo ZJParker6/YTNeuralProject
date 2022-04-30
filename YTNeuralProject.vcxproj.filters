@@ -30,6 +30,18 @@
     <ClInclude Include="Includes\NeuralNetwork\Layers\NeuralLayerMaster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Includes\NeuralNetwork\Layers\InputLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\NeuralNetwork\Layers\OutputLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\NeuralNetwork\Network\Network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\NeuralNetwork\Layers\HiddenLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Utilities\DebugUtils.cpp">
@@ -42,6 +54,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\NeuralNetwork\Layers\NeuralLayerMaster.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\NeuralNetwork\Layers\InputLayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\NeuralNetwork\Layers\OutputLayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\NeuralNetwork\Layers\HiddenLayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\NeuralNetwork\Network\Network.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

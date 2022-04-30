@@ -79,7 +79,7 @@ namespace UMath
 	{
 	private:
 		uint64_t ShuffleTable[4]{ 0 };
-		// uint64_t T{ 0 };
+		uint64_t T{ 0 };
 		uint64_t Result{ 0 };
 		uint64_t XorShuffle(uint32_t SeedIn);
 		uint32_t Seed{ 0 };
@@ -98,20 +98,23 @@ namespace UMath
 		// Conversion to float, return random float between 0 and 1 (1 exclusive)
 		operator double()
 		{
-			return double(double(XorShuffle(SeedGenerator(Seed, bUseOverride))) * (1.0f / 314159265358979.0f));
+			// return double(double(XorShuffle(SeedGenerator(Seed, bUseOverride))) % MAX_RANDOM); //* (1.0f / 314159265358979.0f));
+			// return double(double(XorShuffle(SeedGenerator(Seed, bUseOverride)))); // no max 
+			// return double(double(XorShuffle(SeedGenerator(Seed, bUseOverride))) * (1.0f / 314159265358979.0f)); // default version
+			return (fmod(double(XorShuffle(SeedGenerator(Seed, bUseOverride))), MAX_RANDOM))/ MAX_RANDOM;
 		}
 
 		// Conversion to int64, returns random int64 between 0 and MAX_RANDOM (max inclusive) */
 		operator uint64_t()
 		{
-			return XorShuffle(SeedGenerator(Seed, bUseOverride)) & MAX_RANDOM;
+			return XorShuffle(SeedGenerator(Seed, bUseOverride)) % MAX_RANDOM;
 		}
 	};
 
 	inline uint64_t SRandomVeryFast::XorShuffle(uint32_t SeedIn)
 	{
 		// This is the next() function from the original xorshift generators (with minor variations)
-		ShuffleTable[0] = Seed;
+		ShuffleTable[0] = SeedIn;
 		ShuffleTable[1] = 362436069;
 		ShuffleTable[2] = 521288629;
 
@@ -119,11 +122,11 @@ namespace UMath
 		ShuffleTable[0] ^= ShuffleTable[0] >> 5;
 		ShuffleTable[0] ^= ShuffleTable[0] << 1;
 
-		//T = ShuffleTable[0];
-		ShuffleTable[3] = ShuffleTable[0];
+		T = ShuffleTable[0];
+		//ShuffleTable[3] = ShuffleTable[0];
 		ShuffleTable[0] = ShuffleTable[1];
 		ShuffleTable[1] = ShuffleTable[2];
-		ShuffleTable[2] = ShuffleTable[3] ^ ShuffleTable[0] ^ ShuffleTable[1];
+		ShuffleTable[2] = T ^ ShuffleTable[0] ^ ShuffleTable[1];
 
 		Result = ShuffleTable[2];
 
@@ -158,7 +161,7 @@ namespace UMath
 		// Conversion to int64, returns random int64 between 0 and MAX_RANDOM (max inclusive) */
 		operator uint64_t()
 		{
-			return GetFastRandom(SeedGenerator(Seed, bUseOverride)) & MAX_RANDOM;
+			return GetFastRandom(SeedGenerator(Seed, bUseOverride)) % MAX_RANDOM;
 		}
 	};
 

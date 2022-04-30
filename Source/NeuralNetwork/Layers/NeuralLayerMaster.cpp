@@ -68,6 +68,15 @@ void NeuralLayer::SetNeuron(size_t i, Neuron NeuronIn)
 	}
 }
 
+void NeuralLayer::SetInputs(std::vector<double> InputsIn)
+{
+	Inputs.resize(InputsIn.size());
+	for (size_t i = 0; i < InputsIn.size(); i++)
+	{
+		Inputs[i] = InputsIn[i];
+	}
+}
+
 void NeuralLayer::SetSelf()
 {
 	if (!SelfRef)

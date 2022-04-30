@@ -45,7 +45,7 @@ void Neuron::InitNeuron()
 void Neuron::SetWeightVector()
 {
 	Weights.clear(); // remove garbage
-	Weights.resize(NumberOfInputs + 1); // allocate space for weights in memory
+	Weights.resize(NumberOfInputs); // allocate space for weights in memory
 }
 
 void Neuron::InitRandWeights()
@@ -53,9 +53,11 @@ void Neuron::InitRandWeights()
 	for (size_t i = 0; i < NumberOfInputs; i++)
 	{
 		/* The next line is for debugging, if debugging uncomment the line*/
-		Weights[i] = UMath::SRandomVeryFast(0, true);
+		//Weights[i] = UMath::SRandomVeryFast(0, true, 1000);
+		
 		/* the next line is for practical use, if debugging comment this line */
-		// Weights[i] =  = UMath::SRandomVeryFast();
+		Weights[i] =  UMath::SRandomVeryFast();
+		printf("\nWeight %d is %f\n", i, Weights[i]);
 	}
 }
 
@@ -125,11 +127,13 @@ void Neuron::SetOutput()
 	{
 		if (!InputValues.empty() && !Weights.empty()) // check that the instance has valid variables
 		{
-			for (size_t i = 0; i <= NumberOfInputs; i++)
+			for (size_t i = 0; i < NumberOfInputs; i++)
 			{
 				// sum { if i = last neuron -> bias is added in; else, input * weight }.
+				//OutputBeforeActivation += InputValues.at(i) * Weights.at(i);
 				OutputBeforeActivation += (i == NumberOfInputs ? Bias : InputValues.at(i) * Weights.at(i));
 			}
+			// OutputBeforeActivation += Bias;
 		}
 	}
 	// calc actual output (post activation) 

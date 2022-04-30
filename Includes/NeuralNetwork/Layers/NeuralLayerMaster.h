@@ -65,11 +65,13 @@ public:
 	virtual void InitLayer();
 	/* Add an already created neuron at index i in this layer */
 	virtual void SetNeuron(size_t i, Neuron NeuronIn);
+	/* Set the input vector */
+	void SetInputs(std::vector<double> InputsIn);
 private:
 	/* Set a reference to self*/
 	void SetSelf();
 
-protected:
+public:
 	/* Sets the previous layer */
 	virtual void SetPreviousLayer(NeuralLayer* LayerIn) {};
 	/* sets the next layer */
