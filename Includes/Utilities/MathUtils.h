@@ -95,7 +95,7 @@ namespace UMath
 			MAX_RANDOM = MaxIn;
 		}
 
-		// Conversion to float, return random float between 0 and 1 (1 exclusive)
+		// Conversion to float, return random float between 0 and MAX_RANDOM (max inclusive)
 		operator double()
 		{
 			// return double(double(XorShuffle(SeedGenerator(Seed, bUseOverride))) % MAX_RANDOM); //* (1.0f / 314159265358979.0f));
@@ -152,10 +152,11 @@ namespace UMath
 			MAX_RANDOM = MaxIn;
 		}
 
-		// Conversion to float, return random float between 0 and 1 (1 exclusive)
+		// Conversion to float, return random float between 0 and MAX_RANDOM (Max Inclusive)
 		operator double()
 		{
-			return double(double(GetFastRandom(SeedGenerator(Seed, bUseOverride))) * (1.0f / 314159265358979.0f));
+			// return double(double(GetFastRandom(SeedGenerator(Seed, bUseOverride))) * (1.0f / 314159265358979.0f)); // original
+			return (fmod(double(GetFastRandom(SeedGenerator(Seed, bUseOverride))), MAX_RANDOM)) / MAX_RANDOM;
 		}
 
 		// Conversion to int64, returns random int64 between 0 and MAX_RANDOM (max inclusive) */
@@ -173,6 +174,105 @@ namespace UMath
 
 		return ((*&IntLocal) - (double)1.0f);
 	} 
+
+	/* Slow random number generator using Mersenne Twister */
+	struct SRandomSlow
+	{
+	private:
+		uint32_t Seed{ 0 };
+		bool bUseOverride{ false };
+
+		int64_t MAX_RANDOM = 0x7fff; // 32767
+
+		static const int N = 312;
+		static const int M = 156;
+
+		// constact vector a
+		static const uint64_t MATRIX_A = 0x9908b0df; // xor_mask from the random library
+
+		//Most significant w-r bits
+		static const uint64_t UPPER_MASK = 0x80000000; //  -2147483648
+
+		//Least significant w-r bits
+		static const uint64_t LOWER_MASK = 0x7fffffff; //  2147483647
+
+		// Temperating parameters
+		static const uint64_t TEMPERING_MASK_B = 0x9d2c5680; // the standard tempering b mask from MT19937
+		static const uint64_t TEMPERING_MASK_C = 0xefc60000; // the standard tempering c mask from MT19937
+		static const uint64_t TEMPERING_SHIFT_U = 11; // from the random library
+		static const uint64_t TEMPERING_SHIFT_S = 7; // from the random library
+		static const uint64_t TEMPERING_SHIFT_T = 15; // from the random library
+		static const uint64_t TEMPERING_SHIFT_L = 18; // from the random library
+
+		// the state vector
+		uint64_t mt[N];
+		int64_t mti = N + 1;
+
+		uint64_t RandomSlow();
+
+	public:
+		SRandomSlow(uint32_t SeedIn = 5489, bool bUseOverrideIn = false, uint64_t MaxIn = 0x7fff)
+		{
+			Seed = SeedIn;
+			bUseOverride = bUseOverrideIn;
+			MAX_RANDOM = MaxIn;
+		}
+
+		// Conversion to float, returns random float between 0 and MAX_RANDOM (Max inclusive)
+		operator double()
+		{
+			return fmod(RandomSlow(), MAX_RANDOM) / MAX_RANDOM;
+			// 	return (fmod(double(XorShuffle(SeedGenerator(Seed, bUseOverride))), MAX_RANDOM))/ MAX_RANDOM;
+
+		}
+
+		// Conversion to int64, returns random int64 between 0 and MAX_RANDOM (MAX_RANDOM inclusive)
+		operator uint64_t()
+		{
+			return RandomSlow() & MAX_RANDOM;
+		}
+	};
+
+	inline uint64_t SRandomSlow::RandomSlow()
+	{
+		uint64_t Result;
+		static uint64_t mag01[2] = { 0x0, MATRIX_A };
+
+		if (mti >= N)
+		{
+			uint64_t i;
+
+			if (mti == N + 1)
+			{
+				Seed = 5489ULL;
+			}
+
+			for (i = 0; i < N - M; i++)
+			{
+				Result = (mt[i] & UPPER_MASK | mt[i + 1] & LOWER_MASK);
+				mt[i] = mt[i + M] ^ (Result >> 1) ^ mag01[Result & 0x1];
+			}
+
+			for (; i < N - 1; i++)
+			{
+				Result = (mt[i] & UPPER_MASK | mt[i + 1] & LOWER_MASK);
+				mt[i] = mt[i + (M - N)] ^ (Result >> 1) ^ mag01[Result & 0x1];
+			}
+
+			Result = (mt[N - 1] & UPPER_MASK | mt[0] & LOWER_MASK);
+			mt[N - 1] = mt[M - 1] ^ (Result >> 1) ^ mag01[Result & 0x1];
+
+			mti = 0;
+		}
+
+		Result = mt[mti++];
+		Result ^= (Result >> TEMPERING_SHIFT_U);
+		Result ^= (Result << TEMPERING_SHIFT_S) & TEMPERING_MASK_B;
+		Result ^= (Result << TEMPERING_SHIFT_T) & TEMPERING_MASK_C;
+		Result ^= (Result >> TEMPERING_SHIFT_L);
+
+		return Result;
+	}
 
 	/* return a random double (0 to 1; 1 exclusive). Meant for minor application in other math ulitilities */
 	inline double RandomDouble(bool bUseVeryFastIn = true)
