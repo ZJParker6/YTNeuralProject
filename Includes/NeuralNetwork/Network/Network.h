@@ -70,6 +70,24 @@ public:
 	inline std::vector<double> GetOutputs() const { return OutputValues; }
 	/* Gets output at index i */
 	inline double GetOutput(size_t i) const { return OutputValues.at(i); }
+	/* Gets number of ouf outputs*/
+	inline uint32_t GetNumberOfOutputNeurons() const { return NumberOfOutputs;  } 
+	// inline uint32_t GetNumberOfOutputNeurons() const { return OutputLayerRef->GetNumberOfNeuronsInLayer(); }
+	/* Gets the number of inputs into an output neuron at index i */
+	inline uint32_t GetOutputNeuronsNumInputs(size_t i) const { return OutputLayerRef->GetNeuron(i).GetNumberOfInputs(); }
 
+	/* Gets the number of hidden layers */
+	inline uint32_t GetNumberOfHiddenLayers() const { return NumberOfHiddenLayers; }
+	/* Gets the number of Neurons in a hidden layer (at index i) */
+	inline uint32_t GetNumberOfHiddenNeurons(size_t i) const { return HiddenLayersRef.at(i)->GetNumberOfNeuronsInLayer();  } // update(?) to: NumberOfHiddenNeurons?
+	/* Gets the number of inputs into a hidden layer */
+	inline uint32_t GetHiddenNeuronsNumInputs(size_t i, size_t j) const { return HiddenLayersRef.at(i)->GetNeuron(j).GetNumberOfInputs(); }
+	/* Returns the neuron at index i in the output layer*/
+	inline Neuron GetOutputNeuron(const size_t i) const { return OutputLayerRef->GetNeuron(i); }
+
+	/* Gets inputs */
+	inline std::vector<double> GetInputs() const { return InputValues; }
+	/* Gets input at index i */
+	inline double GetInput(size_t i) const { return InputValues.at(i); }
 
 };

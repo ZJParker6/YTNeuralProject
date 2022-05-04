@@ -1,7 +1,7 @@
 /**************************************************************************
 * NEURAL LAYER CLASS DECLARATION
 *
-*This class is the file for the neuron layer - a parent class for input, output, and hidden layers.
+* This class is the file for the neuron layer - a parent class for input, output, and hidden layers.
 * The layers store the neurons, collate inputs and outputs. 
 *
 * original code by Z. J. Parker ("Two Neurons") for his YT channel.

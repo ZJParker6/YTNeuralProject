@@ -10,6 +10,7 @@
 #include <cmath>
 #include <random>
 #include <set>
+#include <limits>
 #include "DebugUtils.h"
 
 
@@ -381,4 +382,39 @@ namespace UMath
 	{
 		return (1.0 - exp(-a * x)) / (1.0 + exp(-a * x));
 	}
+
+	/**************************************************************************
+	*  FUNCTION LIBRARY: LEARNING DERIVATIVE FUNCTIONS
+	*  These functions generate the output for a neuron
+	*
+	***************************************************************************/
+
+	inline double DerStep(double x) 
+	{ 
+		if (x == 0)
+		{
+			return std::numeric_limits<double>::max();
+			// 1.7e308
+		}
+		else
+		{
+			return 0.0f;
+		}
+	}
+
+	inline double DerLinear(double a)
+	{
+		return a;
+	}
+
+	inline double DerSigmoid(double a, double x)
+	{
+		return ActSigmoid(a, x)*(1-ActSigmoid(a, x));
+	}
+	
+	inline double DerHypertan(double a, double x)
+	{
+		return (1.0)-pow(ActHyperTan(a, x), 2.0);
+	}
+
 };

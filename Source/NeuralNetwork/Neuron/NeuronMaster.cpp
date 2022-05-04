@@ -127,7 +127,7 @@ void Neuron::SetOutput()
 	{
 		if (!InputValues.empty() && !Weights.empty()) // check that the instance has valid variables
 		{
-			for (size_t i = 0; i < NumberOfInputs; i++)
+			for (size_t i = 0; i <= NumberOfInputs; i++) // if error remove '='
 			{
 				// sum { if i = last neuron -> bias is added in; else, input * weight }.
 				//OutputBeforeActivation += InputValues.at(i) * Weights.at(i);
@@ -157,8 +157,113 @@ void Neuron::SetOutput()
 	}
 }
 
+std::vector<double> Neuron::SetOutputBatch(std::vector<std::vector<double>> InputIn)
+{
+	Outputs.resize(NumberOfInputs);
+
+	for (size_t i = 0; i < NumberOfInputs; i++)
+	{
+		Outputs.at(i) = 0.0f;
+		for (size_t j = 0; j < NumberOfInputs; j++)
+		{
+			OutputBeforeActivation += (j == NumberOfInputs ? Bias : InputIn.at(i).at(j) * Weights.at(j));
+		}
+
+		// calc derivatives based on activation method
+		switch (eActivationMethod)
+		{
+		case EActivationMethod::STEP:
+			Outputs.at(i) = UMath::ActStep(OutputBeforeActivation);
+			break;
+		case EActivationMethod::LINEAR:
+			Outputs.at(i) = UMath::ActLinear(a, OutputBeforeActivation);
+			break;
+		case EActivationMethod::SIGMOID:
+			Outputs.at(i) = UMath::ActSigmoid(a, OutputBeforeActivation);
+			break;
+		case EActivationMethod::HYPERTAN:
+			Outputs.at(i) = UMath::ActHyperTan(a, OutputBeforeActivation);
+			break;
+		default:
+			Outputs.at(i) = UMath::ActSigmoid(a, OutputBeforeActivation);
+			break;
+		}
+	}
+	return Outputs;
+}
+
 void Neuron::UpdateWeight(size_t i, double ValueIn)
 {
 	if (i >= 0 && i < NumberOfInputs)
 		Weights[i] = ValueIn;
+}
+
+double Neuron::Derivative(std::vector<double> InputIn)
+{
+	if (NumberOfInputs > 0)
+	{
+		if (!Weights.empty())
+		{
+			for (size_t i = 0; i <= NumberOfInputs; i++) // if error remove '='
+			{
+				OutputBeforeActivation += (i == NumberOfInputs ? Bias : InputIn.at(i) * Weights.at(i));
+			}
+		}
+	}
+	// calc derivatives based on activation method
+	switch (eActivationMethod)
+	{
+	case EActivationMethod::STEP:
+		OutputBeforeActivation = UMath::DerStep(OutputBeforeActivation);
+		break;
+	case EActivationMethod::LINEAR:
+		OutputBeforeActivation = UMath::DerLinear(a);
+		break;
+	case EActivationMethod::SIGMOID:
+		OutputBeforeActivation = UMath::DerSigmoid(a, OutputBeforeActivation);
+		break;
+	case EActivationMethod::HYPERTAN:
+		OutputBeforeActivation = UMath::DerHypertan(a, OutputBeforeActivation);
+		break;
+	default:
+		OutputBeforeActivation = UMath::DerSigmoid(a, OutputBeforeActivation);
+		break;
+	}
+	return OutputBeforeActivation;
+}
+
+
+std::vector<double> Neuron::DerivativeBatch(std::vector<std::vector<double>> InputIn)
+{
+	Outputs.resize(NumberOfInputs);
+
+	for (size_t i = 0; i < NumberOfInputs; i++)
+	{
+		Outputs.at(i) = 0.0f;
+		for (size_t j = 0; j < NumberOfInputs; j++)
+		{
+			OutputBeforeActivation += (j == NumberOfInputs ? Bias : InputIn.at(i).at(j) * Weights.at(j));
+		}
+
+		// calc derivatives based on activation method
+		switch (eActivationMethod)
+		{
+		case EActivationMethod::STEP:
+			Outputs.at(i) = UMath::DerStep(OutputBeforeActivation);
+			break;
+		case EActivationMethod::LINEAR:
+			Outputs.at(i) = UMath::DerLinear(a);
+			break;
+		case EActivationMethod::SIGMOID:
+			Outputs.at(i) = UMath::DerSigmoid(a, OutputBeforeActivation);
+			break;
+		case EActivationMethod::HYPERTAN:
+			Outputs.at(i) = UMath::DerHypertan(a, OutputBeforeActivation);
+			break;
+		default:
+			Outputs.at(i) = UMath::DerSigmoid(a, OutputBeforeActivation);
+			break;
+		}
+	}
+	return Outputs;
 }

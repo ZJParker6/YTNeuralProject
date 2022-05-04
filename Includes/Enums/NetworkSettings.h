@@ -10,3 +10,10 @@
 
 enum class EActivationMethod {STEP, LINEAR, SIGMOID, HYPERTAN };
 
+enum class ERandomizerSettings{XOR, LCG, MT};
+
+enum class ELearningMode {ONLINE, BATCH};
+
+enum class ELearningParadigm {SUPERVISED, UNSUPERVISED};
+
+enum class ELossMeasurement { SIMPLE, SSE, NDEGREES, MSE, MAE, HUBER, POWER };

@@ -11,4 +11,6 @@ namespace UDebug
 {
 	
 	void WriteToDebugLog(std::string InputIn);
+
+
 }

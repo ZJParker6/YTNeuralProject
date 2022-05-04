@@ -38,6 +38,8 @@ private:
 	double Output{ 0.0f };
 	/* Output from this neuron prior to activation function (e.g., input*weight+bias) */
 	double OutputBeforeActivation{ 0.0f };
+	/* Vector for batch outputs */
+	std::vector<double> Outputs;
 	/* The activation method - default is Sigmoid */
 	EActivationMethod eActivationMethod{ EActivationMethod::SIGMOID };
 
@@ -95,6 +97,7 @@ public:
 	void SetIndividualInput(size_t i, double ValueIn);
 	/* Calculate the Output Values */
 	void SetOutput();
+	std::vector<double> SetOutputBatch(std::vector<std::vector<double>> InputIn);
 
 	/************************************************
 	* OUTPUT (incl. act, and before act).
@@ -114,4 +117,6 @@ public:
 	************************************************/
 	/* set an individual weight value, this is done by the system at run time */
 	void UpdateWeight(size_t i, double ValueIn);
+	double Derivative(std::vector<double> InputIn);
+	std::vector<double> DerivativeBatch(std::vector<std::vector<double>> InputIn);
 };
