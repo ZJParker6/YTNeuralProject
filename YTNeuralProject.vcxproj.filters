@@ -48,6 +48,9 @@
     <ClInclude Include="Includes\NeuralNetwork\Learning\DeltaRule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Includes\Utilities\StreamUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Utilities\DebugUtils.cpp">
@@ -78,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\NeuralNetwork\Learning\DeltaRule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Utilities\StreamUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

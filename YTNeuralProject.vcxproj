@@ -151,8 +151,10 @@
     <ClInclude Include="Includes\NeuralNetwork\Neuron\NeuronMaster.h" />
     <ClInclude Include="Includes\Utilities\DebugUtils.h" />
     <ClInclude Include="Includes\Utilities\MathUtils.h" />
+    <ClInclude Include="Includes\Utilities\StreamUtils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Utilities\StreamUtils.cpp" />
     <ClCompile Include="Source\NeuralNetwork\Learning\DeltaRule.cpp" />
     <ClCompile Include="Source\NeuralNetwork\Learning\LearningAlgorithmMaster.cpp" />
     <ClCompile Include="Source\NeuralNetwork\Network\Network.cpp" />

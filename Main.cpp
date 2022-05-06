@@ -4,6 +4,7 @@
 #include "Includes/NeuralNetwork/Network/Network.h"
 #include "Includes/Enums/NetworkSettings.h"
 #include "Includes/Utilities/MathUtils.h"
+#include "Includes/Utilities/StreamUtils.h"
 
 using namespace std;
 
@@ -42,8 +43,21 @@ void RunRandTest()
 	}
 }
 
-int main()
+void RunNetwork()
 {
+	uint32_t NumberOfInputs{ 0 };
+	uint32_t NumberOfOutputs{ 0 };
+	uint32_t NumberOfHiddenLayers{ 0 };
+	vector<uint32_t> NumberOfHiddenNeurons;
+	vector<EActivationMethod> HiddenMethods;
+	EActivationMethod OutputMethod{ EActivationMethod::LINEAR };
+
+	string MethodLocal;
+	string AStep{ "STEP" };
+	string ALinear{ "LINEAR" };
+	string ASigmoid{ "SIGMOID" };
+	string AHypertan{ "HYPERTAN" };
+
 	cout << "\n\n";
 	cout << "\t=================================\n";
 	cout << "\t==     Neural Network Setup    ==\n";
@@ -52,43 +66,123 @@ int main()
 	cout << "\n\nStarting Neural Network Boot... : \n\n Setting Number of Inputs (and Hidden Layer Values)\n";
 	cout << "\n-------------------------------------------------- \n\n";
 
-	uint32_t NumberOfInputs = 2;
-	uint32_t NumberOfOutputs = 1;
-	vector<uint32_t> NumberOfHiddenNeurons{ 2, 2, 2 };
 
-	cout << "Using: " << NumberOfInputs << " input[s]\n\n";
-	cout << "Using: " << NumberOfOutputs << " Output[s]\n\n";
+	// 2 | 3 | 1 | 2, 2, 2
 
-	if (NumberOfHiddenNeurons.size() > 0)
+
+	/* have user set up network */
+
+	//set initial values and methods
+	cout << "\nPlease enter the number of INPUTS: ";
+	cin >> NumberOfInputs;
+
+
+	cout << "\nPlease enter number of hidden LAYERS: ";
+	cin >> NumberOfHiddenLayers;
+	if (NumberOfHiddenLayers != 0)
 	{
-		cout << "Using: " << NumberOfHiddenNeurons.size() << " Hidden Layer[s]\n\n";
-		for (size_t i = 0; i < NumberOfHiddenNeurons.size(); i++)
+		NumberOfHiddenNeurons.resize(NumberOfHiddenLayers);
+		HiddenMethods.resize(NumberOfHiddenLayers);
+
+		for (size_t i = 0; i < NumberOfHiddenLayers; i++)
 		{
-			cout << "... Hidden Layer[" << i << "] houses: " << NumberOfHiddenNeurons[i] << " Neuron[s]\n\n";
+			
+			cout << "\nPlease Enter the number of Neurons in Hidden Layer [" << i << "]: ";
+			cin >> NumberOfHiddenNeurons.at(i);
+
+			cout << "\nPlease select the activation method for layer [" << i << "]'s neuron[s]";
+			cout << " \nEnter one of the following: STEP, LINEAR, SIGMOID, HYPERTAN: ";
+			cin >> MethodLocal;
+
+			if (MethodLocal.empty())
+			{
+				cout << "\nNo method entered.";
+				cout << "\nPlease enter one of the following: STEP, LINEAR, SIGMOID, HYPERTAN: ";
+				cin >> MethodLocal;
+			}
+			else if (UStream::CompareStrings(AStep, MethodLocal))
+			{
+				HiddenMethods[i] = EActivationMethod::STEP;
+			}
+			else if (UStream::CompareStrings(ALinear, MethodLocal))
+			{
+				HiddenMethods[i] = EActivationMethod::LINEAR;
+			}
+			else if (UStream::CompareStrings(ASigmoid, MethodLocal))
+			{
+				HiddenMethods[i] = EActivationMethod::SIGMOID;
+			}
+			else if (UStream::CompareStrings(AHypertan, MethodLocal))
+			{
+				HiddenMethods[i] = EActivationMethod::HYPERTAN;
+			}
+			else
+			{
+				cout << "No valid method entered";
+				cout << "\nPlease enter one of the following: STEP, LINEAR, SIGMOID, HYPERTAN: ";
+				cin >> MethodLocal;
+			}
 		}
+		MethodLocal.empty();
+	}
+
+	cout << "\nPlease enter the number of PREDICTIONS: ";
+	cin >> NumberOfOutputs;
+
+	cout << "\nPlease select the activation method for the output layer's neuron[s]";
+	cout << " \nEnter one of the following: STEP, LINEAR, SIGMOID, HYPERTAN: ";
+	cin >> MethodLocal;
+
+	if (MethodLocal.empty())
+	{
+		cout << "\nNo method entered.";
+		cout << "\nPlease enter one of the following: STEP, LINEAR, SIGMOID, HYPERTAN: ";
+		cin >> MethodLocal;
+	}
+	else if (UStream::CompareStrings(AStep, MethodLocal))
+	{
+		OutputMethod = EActivationMethod::STEP;
+	}
+	else if (UStream::CompareStrings(ALinear, MethodLocal))
+	{
+		OutputMethod = EActivationMethod::LINEAR;
+	}
+	else if (UStream::CompareStrings(ASigmoid, MethodLocal))
+	{
+		OutputMethod = EActivationMethod::SIGMOID;
+	}
+	else if (UStream::CompareStrings(AHypertan, MethodLocal))
+	{
+		OutputMethod = EActivationMethod::HYPERTAN;
 	}
 	else
 	{
-		cout << "Using No Hidden Layers\n\n";
+		cout << "\nNo valid method entered";
+		cout << "\nPlease enter one of the following: STEP, LINEAR, SIGMOID, HYPERTAN: ";
+		cin >> MethodLocal;
 	}
 
-	// set methods for layers
-	vector<EActivationMethod> HiddenMethods;
+	// Set initials weights
+	uint32_t EntryMethod; // NOT REGRESSION! 
+	cout << "\nSelect Initial Weight method:\n";
+	cout << "Enter 1 for Random Initial weights\nEnter 2 for Manual entry\nEnter 3 to read in\nEnter 4 for Debug \n : ";
+	cin >> EntryMethod;
 
-	if (NumberOfHiddenNeurons.size() > 1)
+	switch (EntryMethod)
 	{
-		HiddenMethods.resize(NumberOfHiddenNeurons.size());
+	case 1:
+		cout << "\n Select randomizer:\nEnter 1 for XORshift\nEnter 2 for LCG\nEnter 3 for MT\n : ";
+		break;
+	case 2:
+		break;
+	case 3: 
+		break;
+	case 4:
 
-		for (size_t i = 0; i < NumberOfHiddenNeurons.size(); i++)
-		{
-			HiddenMethods[i] = EActivationMethod::SIGMOID;
-			cout << "Hidden Layer[" << i << "] is using: SIGMOID\n\n";
-		}
+		break;
+	default:
+		break;
 	}
-
-	//Set Output
-	EActivationMethod OutputMethod{ EActivationMethod::LINEAR };
-	cout << "Output Layer is using: LINEAR\n\n";
 
 	/* MAKE NETWORK */
 	cout << "\n-------------------------------------------------- \n";
@@ -117,7 +211,7 @@ int main()
 	cout << "\t=================================\n";
 	cout << "\t==   Neural Network Outputs 1  ==\n";
 	cout << "\t=================================\n";
-	for (size_t i =0; i < NumberOfOutputs; i++)
+	for (size_t i = 0; i < NumberOfOutputs; i++)
 	{
 		NeuralOutputs[i] = NeuralNetwork.GetOutput(i);
 		cout << NeuralOutputs[i] << " ";
@@ -142,8 +236,14 @@ int main()
 	for (size_t i = 0; i < NumberOfOutputs; i++)
 	{
 		NeuralOutputs[i] = NeuralNetwork.GetOutput(i);
-		cout << NeuralOutputs[i] << " ";
+		cout << NeuralOutputs[i] << " "; // return the output(s)
 	}
-	// return the output(s)
+}
+
+
+int main()
+{
+
+	RunNetwork();
 	return 0;
 }
