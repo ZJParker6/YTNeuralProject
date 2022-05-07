@@ -127,3 +127,30 @@ void UStream::dFree(const Data oldData)
 	free(oldData.in);
 	free(oldData.tg);
 }
+
+UStream::Data UStream::Build(const char* fPath, const uint32_t NumberOfInputsin, const uint32_t NumberOfOutputs)
+{
+	FILE* file;
+
+	errno_t err = fopen_s(&file, fPath, "r");
+
+	if (file == NULL)
+	{
+		printf("Could not open %s\n", fPath);
+		printf("Dataset does not exist!\n");
+		exit(1);
+	}
+
+	const uint32_t rows = lns(file);
+	Data data = nData(NumberOfInputsin, NumberOfOutputs, rows);
+
+	for (size_t i = 0; i < rows; i++)
+	{
+		char* line = ReadLine(file);
+		Parse(data, line, i);
+		free(line);
+	}
+	fclose(file);
+
+	return data;
+}

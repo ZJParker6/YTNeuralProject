@@ -84,8 +84,13 @@ public:
 	inline uint32_t GetHiddenNeuronsNumInputs(size_t i, size_t j) const { return HiddenLayersRef.at(i)->GetNeuron(j).GetNumberOfInputs(); }
 	/* Returns the neuron at index i in the output layer*/
 	inline Neuron GetOutputNeuron(const size_t i) const { return OutputLayerRef->GetNeuron(i); }
+	/* Return the hidden layer at index i */
+	inline HiddenLayer* GetHiddenLayer(size_t i) const { return HiddenLayersRef.at(i); }
+	/* Returns the output layer ref */
+	inline OutputLayer* GetOutputLayer() const { return OutputLayerRef; }
 
 	/* Gets inputs */
+	inline uint32_t GetNumberOfInputs() const { return NumberOfInputs; }
 	inline std::vector<double> GetInputs() const { return InputValues; }
 	/* Gets input at index i */
 	inline double GetInput(size_t i) const { return InputValues.at(i); }

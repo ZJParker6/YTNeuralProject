@@ -171,7 +171,7 @@ void RunNetwork()
 	switch (EntryMethod)
 	{
 	case 1:
-		cout << "\n Select randomizer:\nEnter 1 for XORshift\nEnter 2 for LCG\nEnter 3 for MT\n : ";
+		cout << "\nSelect randomizer:\nEnter 1 for XORshift\nEnter 2 for LCG\nEnter 3 for MT\n : ";
 		break;
 	case 2:
 		break;

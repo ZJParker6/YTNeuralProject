@@ -48,5 +48,8 @@ namespace UStream
 
 	/* Free up memory */
 	void dFree(const Data oldData);
+
+	/* build and return single data output */
+	Data Build(const char* fPath, const uint32_t NumberOfInputsin, const uint32_t NumberOfOutputs);
 }
 

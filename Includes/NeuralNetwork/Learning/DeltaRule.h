@@ -61,5 +61,14 @@ public:
 	/* Sets the Overall Error Measurement - and the relevent degrees */
 	void SetOverallErrorMeasure(ELossMeasurement ErrorType);
 
+	/* Calculates the new weights during training for the network to update to - using learning rate. */
 	double CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const uint32_t NeuronIn) override;
+
+	/* Runs training paradigm */
+	void Train();
+	/* Applying the new weights, determined by Train() */
+	void ApplyNewWeights();
+
+	void forward() override;
+	void forward(uint32_t i) override;
 };

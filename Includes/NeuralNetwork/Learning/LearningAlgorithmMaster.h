@@ -8,6 +8,7 @@
 
 #pragma once
 #include <cstdint>
+//#include "../Layers/NeuralLayerMaster.h"
 #include "../Network/Network.h"
 #include "../../Enums/NetworkSettings.h"
 #include "../../Utilities/DebugUtils.h"
@@ -44,6 +45,9 @@ protected:
 
 	/* Should the training data be printed to screen */
 	bool bPrintTraining{ false };
+
+	/* Reference to the Hidden Layer */
+	NeuralLayer* LayerRef{ nullptr };
 
 
 	/************************************************
