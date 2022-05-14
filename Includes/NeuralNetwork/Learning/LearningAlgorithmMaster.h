@@ -58,9 +58,9 @@ public:
 	* ABSTRACTED METHODS
 	* DEFINED BY CHILD CLASSES
 	************************************************/
-	virtual void train() {};
-	virtual void forward() {};
-	virtual void forward(uint32_t i) {};
+	virtual void Train() {};
+	virtual void Forward() {};
+	virtual void Forward(uint32_t i) {};
 	virtual double CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const uint32_t NeuronIn) { return 0.0f; }
 	virtual double CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const uint32_t NeuronIn, double ErrorIn) { return 0.0f; }
 	virtual void Test() {};

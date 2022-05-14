@@ -154,3 +154,21 @@ UStream::Data UStream::Build(const char* fPath, const uint32_t NumberOfInputsin,
 
 	return data;
 }
+
+void UStream::RandomizeSet(const Data DataIn)
+{
+	for (size_t i = 0; i < DataIn.rows; i++)
+	{
+		const uint64_t k = UMath::SRandomVeryFast(0, false, DataIn.rows);
+
+		// storing the original input and target data
+		double* OT = DataIn.tg[i]; // store target output
+		double* IT = DataIn.in[i]; // Store input
+
+		DataIn.tg[i] = DataIn.tg[k]; // move target[k] to target[i]
+		DataIn.tg[k] = OT; // move stored target into target[k]
+
+		DataIn.in[i] = DataIn.in[k]; // move input[k] into input[i]
+		DataIn.in[k] = IT; // move stored input into input[k]
+	}
+}

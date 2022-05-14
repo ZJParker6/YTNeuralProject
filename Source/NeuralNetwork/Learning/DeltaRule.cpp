@@ -53,6 +53,41 @@ DeltaRule::DeltaRule(Network* NetworkIn)
 	}
 }
 
+DeltaRule::DeltaRule(Network* NetworkIn, UStream::Data DataIn)
+{
+	NeuralNet = NetworkIn;
+	TestingDataSet = DataIn;
+
+	/*
+		Error
+		GeneralError
+		OverallError
+	*/
+	for (size_t i = 0; i < TestingDataSet.rows; i++)
+	{
+		GeneralError.resize(TestingDataSet.rows);
+		GeneralError.at(i) = 0;
+		Error.resize(TestingDataSet.rows);
+
+		for (size_t j = 0; j < TestingDataSet.nOutput; j++)
+		{
+			if (i == 0)
+			{
+				OverallError.at(j) = 0;
+			}
+			Error.at(i).resize(TestingDataSet.nOutput);
+			Error.at(i).at(j) = 0;
+		}
+	}
+}
+
+DeltaRule::DeltaRule(Network* NetworkIn, UStream::Data DataIn, ELearningMode LearningModeIn)
+{
+	NeuralNet = NetworkIn;
+	TestingDataSet = DataIn;
+	LearningMode = LearningModeIn;
+}
+
 DeltaRule::~DeltaRule()
 {
 }
@@ -115,6 +150,28 @@ void DeltaRule::SetOverallErrorMeasure(ELossMeasurement ErrorType)
 	OverallErrorMeasurement = ErrorType;
 }
 
+void DeltaRule::SetTestingDataSet(UStream::Data DataIn)
+{
+	TestingDataSet = DataIn;
+	
+	for (size_t i = 0; i < TestingDataSet.rows ; i++)
+	{
+		TestingGeneralError.resize(TestingDataSet.rows);
+		TestingGeneralError.at(i) = 0;
+		TestingError.resize(TestingDataSet.rows);
+
+		for (size_t j = 0; j < TestingDataSet.nOutput ; j++)
+		{
+			if (i == 0)
+			{
+				TestingOverallError.at(j) = 0;
+			}
+			TestingError.at(i).resize(TestingDataSet.nOutput);
+			TestingError.at(i).at(j) = 0;
+		}
+	}
+}
+
 double DeltaRule::CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const uint32_t NeuronIn)
 {
 	if (LayerNumberIn > 0) // change to 1 if int not vector
@@ -161,7 +218,7 @@ void DeltaRule::Train()
 			Epoch = 0;
 			int k = 0;
 			CurrentRecord = 0;
-			forward(k);
+			Forward(k);
 
 			// print for debugging and for double check network functions in training/learning.
 			if (bPrintTraining)
@@ -193,7 +250,7 @@ void DeltaRule::Train()
 			break;
 		case ELearningMode::BATCH:
 			Epoch = 0;
-			forward();
+			Forward();
 
 			// print for debugging and for double check network functions in training/learning.
 			if (bPrintTraining)
@@ -212,7 +269,7 @@ void DeltaRule::Train()
 						}
 					}
 					// APPLY new weight
-					forward();
+					Forward();
 
 
 					// print for debugging and for double check network functions in training/learning.
@@ -268,7 +325,57 @@ void DeltaRule::ApplyNewWeights() // double check indexing of vector.
 	}
 }
 
-void DeltaRule::forward()
+
+void DeltaRule::Forward()
+{
+	if (NeuralNet->GetNumberOfHiddenLayers() > 0)
+	{
+		UDebug::WriteToDebugLog("Delta Rule cannot be applied with more than one layer in a neural network");
+	}
+	else
+	{
+		for (size_t i = 0; i < TestingDataSet.rows; i++)
+		{
+			// Get from TestingDataSet.in (2d vector) the "interior" vector at index i of the "outer" vector
+			std::vector<double> InputLocal;
+			std::vector<std::vector<double>> ExpectedLocal;
+			int SizeLocal = *(&TestingDataSet.in[i] + 1) - TestingDataSet.in[i];
+			InputLocal.resize(SizeLocal);
+			ExpectedLocal.resize(SizeLocal);
+
+			ObservedOutput.resize(TestingDataSet.rows);
+			ObservedOutput[i].resize(TestingDataSet.nOutput);
+			ExpectedLocal.resize(TestingDataSet.rows);
+			ExpectedLocal[i].resize(TestingDataSet.nOutput);
+
+
+			for (size_t k = 0; k < SizeLocal; k++)
+			{
+				double ValLocal = TestingDataSet.in[i][k];
+				InputLocal.at(i) = ValLocal;
+			}
+			NeuralNet->SetInputs(InputLocal);
+			NeuralNet->NetworkCalc();
+		
+			for (size_t k = 0; k < SizeLocal; k++)
+			{
+				double ValLocal = NeuralNet->GetOutput(k);
+				ObservedOutput[i][k] = ValLocal;
+				ExpectedLocal[i][k] = TestingDataSet.tg[i][k];
+			}
+			GeneralError[i] = SetGeneralError(ExpectedLocal[i], ObservedOutput[i]);
+	
+			for(size_t j = 0; j < TestingDataSet.nOutput; j++)
+			{
+				// set Error.at(i).at(j)  = error algorithm (simple, square, MSE, MAE - make a decision. Simple or square will fit best at this stage)
+				// set OverallError.at(i).at(j) = overall error algorithm (match above)
+			}
+			// OverallGeneralError = overall general error algorithm (simple)
+		}
+	}
+}
+
+void DeltaRule::Forward(uint32_t i)
 {
 	if (NeuralNet->GetNumberOfHiddenLayers() > 0)
 	{
@@ -280,15 +387,29 @@ void DeltaRule::forward()
 	}
 }
 
-void DeltaRule::forward(uint32_t i)
+double DeltaRule::SetGeneralError(std::vector<double> YT, std::vector<double> YO)
 {
-	if (NeuralNet->GetNumberOfHiddenLayers() > 0)
+	size_t Ny = YT.size();
+	double ResultLocal{ 0.0f };
+
+	// calculate individaul error variance
+	for (size_t i = 0; i < Ny; i++)
 	{
-		UDebug::WriteToDebugLog("Delta Rule cannot be applied with more than one layer in a neural network");
+		ResultLocal += pow(YT[i] - YO[i], DegreeOverallError);
 	}
+
+	// return the standardized error (RSS, SSE)
+	if (OverallErrorMeasurement == ELossMeasurement::MSE)
+	{
+		ResultLocal *= (1.0 / Ny);
+	}
+	// make sure to expand out with else if for the other "non-starter" algorithms
 	else
 	{
-		// TODO: get dataset imp done first.
+		ResultLocal *= (1.0 / DegreeOverallError);
 	}
+
+	return ResultLocal;
 }
+
 

@@ -5,6 +5,8 @@
 #include <stdio.h> // fprint
 #include <cstring>
 #include <string.h>
+#include <algorithm> 
+#include "MathUtils.h"
 
 
 namespace UStream
@@ -51,5 +53,8 @@ namespace UStream
 
 	/* build and return single data output */
 	Data Build(const char* fPath, const uint32_t NumberOfInputsin, const uint32_t NumberOfOutputs);
+
+	/* Going randomize the order in which the data is passed to the network */
+	void RandomizeSet(const Data DataIn);
 }
 
