@@ -54,8 +54,8 @@ public:
 private:
 	uint32_t CurrentRecord{ 0 };
 	std::vector<std::vector<double>> NewWeights;
-	UStream::Data TestingDataSet;
-
+	UStream::Data TrainingDataSet;
+	std::vector<double>  DerivativeResults;
 
 
 /************************************************
@@ -68,10 +68,11 @@ public:
 	void SetOverallErrorMeasure(ELossMeasurement ErrorType);
 
 	/* Parses the dataset for learning algorithm*/
-	void SetTestingDataSet(UStream::Data DataIn);
+	void SetTrainingDataSet(UStream::Data DataIn);
 
 	/* Calculates the new weights during training for the network to update to - using learning rate. */
 	double CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const uint32_t NeuronIn) override;
+	double CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const uint32_t NeuronIn, double ErrorIn) override;
 
 	/* Runs training paradigm */
 	void Train() override;
@@ -82,4 +83,9 @@ public:
 	void Forward(uint32_t i) override;
 
 	double SetGeneralError(std::vector<double> YT, std::vector<double> YO);
+//	double SetOverallGeneralError(std::vector<double> YT, std::vector<double> YO);
+	double SetOverallGeneralErrorList(std::vector<std::vector<double>> YT, std::vector<std::vector<double>> YO);
+	double SetOverallError(std::vector<double> YT, std::vector<double> YO);
+	double SetSimpleError(double YT, double YO);
+
 };

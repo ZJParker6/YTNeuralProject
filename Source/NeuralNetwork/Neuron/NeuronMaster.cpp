@@ -240,6 +240,7 @@ std::vector<double> Neuron::DerivativeBatch(std::vector<std::vector<double>> Inp
 	for (size_t i = 0; i < NumberOfInputs; i++)
 	{
 		Outputs.at(i) = 0.0f;
+		// Might need to reset OutputBeforeActivation to 0.0f here, for multiple epochs. Test to find see if current version works is needed.
 		for (size_t j = 0; j < NumberOfInputs; j++)
 		{
 			OutputBeforeActivation += (j == NumberOfInputs ? Bias : InputIn.at(i).at(j) * Weights.at(j));

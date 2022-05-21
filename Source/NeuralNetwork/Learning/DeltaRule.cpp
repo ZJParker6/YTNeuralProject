@@ -56,26 +56,26 @@ DeltaRule::DeltaRule(Network* NetworkIn)
 DeltaRule::DeltaRule(Network* NetworkIn, UStream::Data DataIn)
 {
 	NeuralNet = NetworkIn;
-	TestingDataSet = DataIn;
+	TrainingDataSet = DataIn;
 
 	/*
 		Error
 		GeneralError
 		OverallError
 	*/
-	for (size_t i = 0; i < TestingDataSet.rows; i++)
+	for (size_t i = 0; i < TrainingDataSet.rows; i++)
 	{
-		GeneralError.resize(TestingDataSet.rows);
+		GeneralError.resize(TrainingDataSet.rows);
 		GeneralError.at(i) = 0;
-		Error.resize(TestingDataSet.rows);
+		Error.resize(TrainingDataSet.rows);
 
-		for (size_t j = 0; j < TestingDataSet.nOutput; j++)
+		for (size_t j = 0; j < TrainingDataSet.nOutput; j++)
 		{
 			if (i == 0)
 			{
 				OverallError.at(j) = 0;
 			}
-			Error.at(i).resize(TestingDataSet.nOutput);
+			Error.at(i).resize(TrainingDataSet.nOutput);
 			Error.at(i).at(j) = 0;
 		}
 	}
@@ -84,7 +84,7 @@ DeltaRule::DeltaRule(Network* NetworkIn, UStream::Data DataIn)
 DeltaRule::DeltaRule(Network* NetworkIn, UStream::Data DataIn, ELearningMode LearningModeIn)
 {
 	NeuralNet = NetworkIn;
-	TestingDataSet = DataIn;
+	TrainingDataSet = DataIn;
 	LearningMode = LearningModeIn;
 }
 
@@ -150,23 +150,23 @@ void DeltaRule::SetOverallErrorMeasure(ELossMeasurement ErrorType)
 	OverallErrorMeasurement = ErrorType;
 }
 
-void DeltaRule::SetTestingDataSet(UStream::Data DataIn)
+void DeltaRule::SetTrainingDataSet(UStream::Data DataIn)
 {
-	TestingDataSet = DataIn;
+	TrainingDataSet = DataIn;
 	
-	for (size_t i = 0; i < TestingDataSet.rows ; i++)
+	for (size_t i = 0; i < TrainingDataSet.rows ; i++)
 	{
-		TestingGeneralError.resize(TestingDataSet.rows);
+		TestingGeneralError.resize(TrainingDataSet.rows);
 		TestingGeneralError.at(i) = 0;
-		TestingError.resize(TestingDataSet.rows);
+		TestingError.resize(TrainingDataSet.rows);
 
-		for (size_t j = 0; j < TestingDataSet.nOutput ; j++)
+		for (size_t j = 0; j < TrainingDataSet.nOutput ; j++)
 		{
 			if (i == 0)
 			{
 				TestingOverallError.at(j) = 0;
 			}
-			TestingError.at(i).resize(TestingDataSet.nOutput);
+			TestingError.at(i).resize(TrainingDataSet.nOutput);
 			TestingError.at(i).at(j) = 0;
 		}
 	}
@@ -197,9 +197,139 @@ double DeltaRule::CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const 
 			break;
 		case ELearningMode::BATCH:
 			// come back later. 
+			size_t SizeLocal = NeuralNet->GetInputs().size();
+			DerivativeResults.resize(SizeLocal);
+			std::vector<std::vector<double>> InputLocal;
+			std::vector<double> NthInput;
+			NthInput.resize(TrainingDataSet.rows);
+			InputLocal.resize(SizeLocal);
+
+			// NeuronLocal.DerivativeBatch(TrainingDataSet.in);
+
+			// getting useable version of the Training Dataset Inputs to pass to the neuron.
+			for (size_t i = 0; i < SizeLocal; i++)
+			{
+				InputLocal[i].resize(SizeLocal);
+
+				for (size_t k = 0; k < SizeLocal; k++)
+				{
+					double ValLocal = TrainingDataSet.in[i][k];
+					InputLocal[i][k] = ValLocal;
+				}
+			}
+			DerivativeResults = NeuronLocal.DerivativeBatch(InputLocal);
+
+			if (InputIn < NeuronLocal.GetNumberOfInputs())
+			{
+				for (size_t i = 0; i < TrainingDataSet.rows; i++)
+				{
+					for (size_t k = 0; k < TrainingDataSet.nInputs; k++)
+					{
+						// this runs only once, which is how we can get away with this not resetting the values. 
+						NthInput[k] = TrainingDataSet.in[i][k];
+					}
+				}
+			}
+			else
+			{
+				for (size_t i = 0; i < TrainingDataSet.rows; i++)
+				{
+					NthInput[i] = 0.0f;
+				}
+			}
+
+			double MutliDerivResultNthInput{ 0.0f };
+			for (size_t i = 0; i < TrainingDataSet.rows; i++)
+			{
+				MutliDerivResultNthInput += Error.at(i).at(NeuronIn) * NeuronLocal.Derivative(NeuralNet->GetInputs()) * NthInput[i]; 
+			}
+
+			DeltaWeight *= MutliDerivResultNthInput;
 			break;
 		}
 		return NeuronLocal.GetWeight(InputIn) + DeltaWeight;
+
+	}
+}
+
+double DeltaRule::CalcNewWeight(uint32_t LayerNumberIn, uint32_t InputIn, const uint32_t NeuronIn, double ErrorIn)
+{
+	if (LayerNumberIn > 0) // change to 1 if int not vector
+	{
+		UDebug::WriteToDebugLog("Delta Rule cannot be applied with more than one layer in a neural network");
+	}
+	else
+	{
+		double DeltaWeight = LearningRate*ErrorIn;
+		Neuron NeuronLocal = NeuralNet->GetOutputNeuron(NeuronIn); // if not helper
+
+		switch (LearningMode)
+		{
+		case ELearningMode::ONLINE:
+
+			DeltaWeight *= NeuronLocal.Derivative(NeuralNet->GetInputs());
+
+			if (InputIn < NeuronLocal.GetNumberOfInputs())
+			{
+				DeltaWeight *= NeuralNet->GetInput(InputIn);
+			}
+
+			break;
+
+		case ELearningMode::BATCH:
+			// come back later. 
+			size_t SizeLocal = NeuralNet->GetInputs().size();
+			DerivativeResults.resize(SizeLocal);
+			std::vector<std::vector<double>> InputLocal;
+			std::vector<double> NthInput;
+			NthInput.resize(TrainingDataSet.rows);
+			InputLocal.resize(SizeLocal);
+
+			// NeuronLocal.DerivativeBatch(TrainingDataSet.in);
+
+			// getting useable version of the Training Dataset Inputs to pass to the neuron.
+			for (size_t i = 0; i < SizeLocal; i++)
+			{
+				InputLocal[i].resize(SizeLocal);
+
+				for (size_t k = 0; k < SizeLocal; k++)
+				{
+					double ValLocal = TrainingDataSet.in[i][k];
+					InputLocal[i][k] = ValLocal;
+				}
+			}
+			DerivativeResults = NeuronLocal.DerivativeBatch(InputLocal);
+
+			if (InputIn < NeuronLocal.GetNumberOfInputs())
+			{
+				for (size_t i = 0; i < TrainingDataSet.rows; i++)
+				{
+					for (size_t k = 0; k < TrainingDataSet.nInputs; k++)
+					{
+						// this runs only once, which is how we can get away with this not resetting the values. 
+						NthInput[k] = TrainingDataSet.in[i][k];
+					}
+				}
+			}
+			else
+			{
+				for (size_t i = 0; i < TrainingDataSet.rows; i++)
+				{
+					NthInput[i] = 0.0f;
+				}
+			}
+
+			double MutliDerivResultNthInput{ 0.0f };
+			for (size_t i = 0; i < TrainingDataSet.rows; i++)
+			{
+				MutliDerivResultNthInput += Error.at(i).at(NeuronIn) * NeuronLocal.Derivative(NeuralNet->GetInputs()) * NthInput[i];
+			}
+
+			DeltaWeight *= MutliDerivResultNthInput;
+			break;
+		}
+		return NeuronLocal.GetWeight(InputIn) + DeltaWeight;
+
 	}
 }
 
@@ -235,19 +365,27 @@ void DeltaRule::Train()
 						NewWeights.at(0).at(j) = CalcNewWeight(0, i, j);
 					}
 				}
-				// APPLY new weight
+				ApplyNewWeights();
 				CurrentRecord = ++k;
+				if (k >= TrainingDataSet.rows)
+				{
+					k = 0;
+					CurrentRecord = 0;
+					Epoch++;
+				}
 
-				// come back to later (stored data).
+				Forward(k);
 
-							// print for debugging and for double check network functions in training/learning.
+				// print for debugging and for double check network functions in training/learning.
 				if (bPrintTraining)
 				{
 					// come back to this.
 				}
 			}
 		}
-			break;
+
+		break;
+
 		case ELearningMode::BATCH:
 			Epoch = 0;
 			Forward();
@@ -261,22 +399,21 @@ void DeltaRule::Train()
 			while (Epoch<MaxEpochs && OverallGeneralError > MinOverallError)
 			{
 				Epoch++;
-					for (size_t j = 0; j < NeuralNet->GetNumberOfOutputNeurons(); j++)
+				for (size_t j = 0; j < NeuralNet->GetNumberOfOutputNeurons(); j++)
+				{
+					for (size_t i = 0; i <= NeuralNet->GetNumberOfInputs(); i++)
 					{
-						for (size_t i = 0; i <= NeuralNet->GetNumberOfInputs(); i++)
-						{
-							NewWeights.at(0).at(j) = CalcNewWeight(0, i, j);
-						}
+						NewWeights.at(0).at(j) = CalcNewWeight(0, i, j);
 					}
-					// APPLY new weight
-					Forward();
+				}
+				ApplyNewWeights();
+				Forward();
 
-
-					// print for debugging and for double check network functions in training/learning.
-					if (bPrintTraining)
-					{
-						// come back to this.
-					}
+				// print for debugging and for double check network functions in training/learning.
+				if (bPrintTraining)
+				{
+					// come back to this.
+				}
 			}
 			break;
 		}
@@ -325,7 +462,6 @@ void DeltaRule::ApplyNewWeights() // double check indexing of vector.
 	}
 }
 
-
 void DeltaRule::Forward()
 {
 	if (NeuralNet->GetNumberOfHiddenLayers() > 0)
@@ -334,24 +470,24 @@ void DeltaRule::Forward()
 	}
 	else
 	{
-		for (size_t i = 0; i < TestingDataSet.rows; i++)
+		std::vector<double> InputLocal;
+		std::vector<std::vector<double>> ExpectedLocal;
+		for (size_t i = 0; i < TrainingDataSet.rows; i++)
 		{
-			// Get from TestingDataSet.in (2d vector) the "interior" vector at index i of the "outer" vector
-			std::vector<double> InputLocal;
-			std::vector<std::vector<double>> ExpectedLocal;
-			int SizeLocal = *(&TestingDataSet.in[i] + 1) - TestingDataSet.in[i];
+			// Get from TrainingDataSet.in (2d vector) the "interior" vector at index i of the "outer" vector
+			int SizeLocal = *(&TrainingDataSet.in[i] + 1) - TrainingDataSet.in[i];
 			InputLocal.resize(SizeLocal);
 			ExpectedLocal.resize(SizeLocal);
 
-			ObservedOutput.resize(TestingDataSet.rows);
-			ObservedOutput[i].resize(TestingDataSet.nOutput);
-			ExpectedLocal.resize(TestingDataSet.rows);
-			ExpectedLocal[i].resize(TestingDataSet.nOutput);
+			ObservedOutput.resize(TrainingDataSet.rows);
+			ObservedOutput[i].resize(TrainingDataSet.nOutput);
+			ExpectedLocal.resize(TrainingDataSet.rows);
+			ExpectedLocal[i].resize(TrainingDataSet.nOutput);
 
 
 			for (size_t k = 0; k < SizeLocal; k++)
 			{
-				double ValLocal = TestingDataSet.in[i][k];
+				double ValLocal = TrainingDataSet.in[i][k];
 				InputLocal.at(i) = ValLocal;
 			}
 			NeuralNet->SetInputs(InputLocal);
@@ -361,17 +497,21 @@ void DeltaRule::Forward()
 			{
 				double ValLocal = NeuralNet->GetOutput(k);
 				ObservedOutput[i][k] = ValLocal;
-				ExpectedLocal[i][k] = TestingDataSet.tg[i][k];
+				ExpectedLocal[i][k] = TrainingDataSet.tg[i][k];
 			}
 			GeneralError[i] = SetGeneralError(ExpectedLocal[i], ObservedOutput[i]);
 	
-			for(size_t j = 0; j < TestingDataSet.nOutput; j++)
+			for(size_t j = 0; j < TrainingDataSet.nOutput; j++)
 			{
-				// set Error.at(i).at(j)  = error algorithm (simple, square, MSE, MAE - make a decision. Simple or square will fit best at this stage)
-				// set OverallError.at(i).at(j) = overall error algorithm (match above)
+				Error.at(i).at(j) = SetSimpleError(ExpectedLocal[i][j], ObservedOutput[i][j]);
 			}
 			// OverallGeneralError = overall general error algorithm (simple)
 		}
+		for (size_t j = 0; j < NeuralNet->GetNumberOfOutputNeurons(); j++)
+		{
+			OverallError[j] = SetOverallError(ExpectedLocal[j], InputLocal); // update later to Nth Values.
+		}
+		OverallGeneralError = SetOverallGeneralErrorList(ExpectedLocal, ObservedOutput);
 	}
 }
 
@@ -383,7 +523,44 @@ void DeltaRule::Forward(uint32_t i)
 	}
 	else
 	{
-		// TODO: get dataset imp done first.
+		std::vector<double> InputLocal;
+		std::vector<std::vector<double>> ExpectedLocal;
+		int SizeLocal = *(&TrainingDataSet.in[i] + 1) - TrainingDataSet.in[i];
+		InputLocal.resize(SizeLocal);
+		ExpectedLocal.resize(SizeLocal);
+
+		ObservedOutput.resize(TrainingDataSet.rows);
+		ObservedOutput[i].resize(TrainingDataSet.nOutput);
+		ExpectedLocal.resize(TrainingDataSet.rows);
+		ExpectedLocal[i].resize(TrainingDataSet.nOutput);
+
+		for (size_t k = 0; k < TrainingDataSet.nInputs; k++)
+		{
+			InputLocal[k] = TrainingDataSet.in[i][k];
+		}
+		NeuralNet->SetInputs(InputLocal);
+		NeuralNet->NetworkCalc();
+
+		for (size_t k = 0; k < SizeLocal; k++)
+		{
+			double ValLocal = NeuralNet->GetOutput(k);
+			ObservedOutput[i][k] = ValLocal;
+			ExpectedLocal[i][k] = TrainingDataSet.tg[i][k];
+		}
+
+		for (size_t k = 0; k < TrainingDataSet.nOutput; k++)
+		{
+			TrainingDataSet.tg[i][k] = NeuralNet->GetOutput(k);
+		}
+
+		GeneralError[i] = SetGeneralError(ExpectedLocal[i], ObservedOutput[i]);
+
+		for (size_t j = 0; j < NeuralNet->GetNumberOfOutputNeurons(); j++)
+		{
+			OverallError[j] = SetOverallError(ExpectedLocal[j], InputLocal); // double check that this is not derivaties you are trying to use.
+			Error[i][j] = SetSimpleError(ExpectedLocal[i][j], ObservedOutput[i][j]);
+		}
+		OverallGeneralError = SetOverallGeneralErrorList(ExpectedLocal, ObservedOutput);
 	}
 }
 
@@ -412,4 +589,88 @@ double DeltaRule::SetGeneralError(std::vector<double> YT, std::vector<double> YO
 	return ResultLocal;
 }
 
+/*
+* I combined the SetOverallGeneralError and the SetGeneralError
+double DeltaRule::SetOverallGeneralError(std::vector<double> YT, std::vector<double> YO)
+{
+	size_t Ny = YT.size();
+	double ResultLocal{ 0.0f };
+	double YResultLocal{ 0.0f };
 
+	for (size_t i = 0; i < Ny; i++)
+	{
+		YResultLocal += pow(YT[i] - YO[i], DegreeGeneralError);
+	}
+
+	if (GeneralErrorMeasurement == ELossMeasurement::MSE)
+	{
+		ResultLocal += pow((1.0f / Ny) * YResultLocal, DegreeOverallError);
+	}
+	else // make else if later forother measurement types
+	{
+		ResultLocal += pow((1.0f / DegreeGeneralError) * YResultLocal, DegreeOverallError);
+	}
+
+	return ((1.0f / Ny)* ResultLocal);
+}
+*/
+
+double DeltaRule::SetOverallGeneralErrorList(std::vector<std::vector<double>> YT, std::vector<std::vector<double>> YO)
+{
+	size_t N = YT.size();
+	size_t Ny = YT.at(0).size();
+	double ResultLocal{ 0.0f };
+
+	for (size_t i = 0; i < N; i++)
+	{
+		double YResultLocal{ 0.0f };
+		for (size_t j = 0; j < Ny; j++)
+		{
+			YResultLocal = pow(YT.at(i).at(j) - YO.at(i).at(j), DegreeGeneralError);
+		}
+		if (GeneralErrorMeasurement == ELossMeasurement::MSE)
+		{
+			ResultLocal += pow((1.0 / Ny) * YResultLocal, DegreeOverallError);
+		}
+		else
+		{
+			ResultLocal += pow((1.0 / DegreeGeneralError) * YResultLocal, DegreeOverallError);
+		}
+	}
+	if (OverallErrorMeasurement == ELossMeasurement::MSE)
+	{
+		ResultLocal *= (1.0 / N);
+	}
+	else
+	{
+		ResultLocal *= (1.0 / DegreeOverallError);
+	}
+	return ResultLocal;
+}
+
+double DeltaRule::SetOverallError(std::vector<double> YT, std::vector<double> YO)
+{
+	size_t N = YT.size();
+	double ResultLocal{ 0.0f };
+
+	for (size_t i = 0; i < N; i++)
+	{
+		ResultLocal += pow((YT.at(i) - YO.at(i)), DegreeOverallError);
+	}
+
+	if (GeneralErrorMeasurement == ELossMeasurement::MSE)
+	{
+		ResultLocal *= (1.0f/N);
+	}
+	else // make else if later forother measurement types
+	{
+		ResultLocal *= (1.0f / DegreeOverallError);
+	}
+
+	return ResultLocal;
+}
+
+double DeltaRule::SetSimpleError(double YT, double YO)
+{
+	return YT - YO;
+}
